@@ -1,0 +1,137 @@
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+public class SudokuSolver extends JFrame {
+    private static final int SIZE = 9;
+    private JTextField[][] cells = new JTextField[SIZE][SIZE];
+
+    // Soft pastel colors for each 3x3 block
+    private Color[] blockColors = {
+        new Color(255, 230, 230), 
+        new Color(230, 255, 230), 
+        new Color(230, 230, 255), 
+        new Color(255, 255, 230), 
+        new Color(255, 240, 230), 
+        new Color(240, 230, 255), 
+        new Color(230, 255, 255), 
+        new Color(255, 230, 255), 
+        new Color(245, 255, 230)  
+    };
+
+    public SudokuSolver() {
+        setTitle("Sudoku Solver");
+        setSize(550, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLocationRelativeTo(null);
+
+        JPanel panel = new JPanel(new GridLayout(SIZE, SIZE));
+        Font font = new Font("SansSerif", Font.BOLD, 20);
+
+        // Create input fields with 3x3 pastel backgrounds
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                cells[row][col] = new JTextField();
+                cells[row][col].setHorizontalAlignment(JTextField.CENTER);
+                cells[row][col].setFont(font);
+
+                // Determine which 3x3 block the cell belongs to
+                int blockIndex = (row / 3) * 3 + (col / 3);
+                cells[row][col].setBackground(blockColors[blockIndex]);
+
+                panel.add(cells[row][col]);
+            }
+        }
+
+        JButton solveButton = new JButton(" Solve Sudoku ");
+        solveButton.setFont(new Font("SansSerif", Font.BOLD, 20));
+        solveButton.setBackground(new Color(100, 181, 246)); 
+        solveButton.setForeground(Color.WHITE);
+        solveButton.setFocusPainted(false);
+        solveButton.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+
+        solveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int[][] board = new int[SIZE][SIZE];
+
+                // Read input from text fields
+                for (int i = 0; i < SIZE; i++) {
+                    for (int j = 0; j < SIZE; j++) {
+                        String text = cells[i][j].getText();
+                        board[i][j] = text.isEmpty() ? 0 : Integer.parseInt(text);
+                    }
+                }
+
+                // Solve and update
+                if (solve(board)) {
+                    for (int i = 0; i < SIZE; i++) {
+                        for (int j = 0; j < SIZE; j++) {
+                            cells[i][j].setText(String.valueOf(board[i][j]));
+                        }
+                    }
+                    JOptionPane.showMessageDialog(null, "✅ Solved!");
+                } else {
+                    JOptionPane.showMessageDialog(null, "❌ No solution exists.");
+                }
+            }
+        });
+
+        getContentPane().setLayout(new BorderLayout());
+        getContentPane().add(panel, BorderLayout.CENTER);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(245, 245, 245));
+        buttonPanel.add(solveButton);
+
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    // Backtracking algorithm
+    private boolean solve(int[][] board) {
+        for (int row = 0; row < SIZE; row++) {
+            for (int col = 0; col < SIZE; col++) {
+                if (board[row][col] == 0) {
+                    for (int num = 1; num <= SIZE; num++) {
+                        if (isValid(board, row, col, num)) {
+                            board[row][col] = num;
+                            if (solve(board)) {
+                                return true;
+                            }
+                            board[row][col] = 0;
+                        }
+                    }
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+    private boolean isValid(int[][] board, int row, int col, int num) {
+        for (int x = 0; x < SIZE; x++) {
+            if (board[row][x] == num || board[x][col] == num) {
+                return false;
+            }
+        }
+
+        int startRow = row - row % 3;
+        int startCol = col - col % 3;
+        for (int i = startRow; i < startRow + 3; i++) {
+            for (int j = startCol; j < startCol + 3; j++) {
+                if (board[i][j] == num) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            SudokuSolver solver = new SudokuSolver();
+            solver.setVisible(true);
+        });
+    }
+}
